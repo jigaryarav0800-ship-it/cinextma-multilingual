@@ -33,6 +33,4 @@ const nextConfig: NextConfig = {
   },
 };
 
-const pwa = isGitHubPages ? ((config: NextConfig) => config) : withPWA(nextConfig);
-
-export default pwa(nextConfig);
+export default isGitHubPages ? nextConfig : withPWA(nextConfig);
