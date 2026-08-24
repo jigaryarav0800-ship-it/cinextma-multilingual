@@ -88,7 +88,7 @@ jobs:
 
   android:
     name: Build Android APK
-    needs: [version, pages]
+    needs: version
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -105,8 +105,6 @@ jobs:
           mkdir -p out
           cp docs/index.html out/index.html
       - name: Sync Android project
-        env:
-          CAP_SERVER_URL: https://${{ github.repository_owner }}.github.io${{ env.PAGES_BASE_PATH }}/
         run: npx cap sync android
       - name: Setup Java
         uses: actions/setup-java@v4
