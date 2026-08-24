@@ -60,8 +60,9 @@ jobs:
           echo "tag=$tag" >> "$GITHUB_OUTPUT"
 
   pages:
-    name: Build and deploy GitHub Pages
+    name: Build and deploy GitHub Pages (enable once in repository settings)
     needs: version
+    continue-on-error: true
     runs-on: ubuntu-latest
     environment:
       name: github-pages
