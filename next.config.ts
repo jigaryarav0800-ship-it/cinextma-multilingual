@@ -13,7 +13,16 @@ const withPWA = withPWAInit({
   },
 });
 
+const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
+const isGitHubPages = process.env.GITHUB_PAGES === "true";
+
 const nextConfig: NextConfig = {
+  ...(isGitHubPages ? { output: "export" as const } : {}),
+  basePath,
+  assetPrefix: basePath ? `${basePath}/` : undefined,
+  images: {
+    unoptimized: isGitHubPages,
+  },
   // https://github.com/payloadcms/payload/issues/12550#issuecomment-2939070941
   turbopack: {
     resolveExtensions: [".mdx", ".tsx", ".ts", ".jsx", ".js", ".mjs", ".json"],
@@ -24,6 +33,6 @@ const nextConfig: NextConfig = {
   },
 };
 
-const pwa = withPWA(nextConfig);
+const pwa = isGitHubPages ? ((config: NextConfig) => config) : withPWA(nextConfig);
 
-export default pwa;
+export default pwa(nextConfig);

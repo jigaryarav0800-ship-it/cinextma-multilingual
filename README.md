@@ -1,83 +1,60 @@
-# CINEXTMA - Free Movies & TV Shows Streaming
+# CINEXTMA Multilingual
 
-<div style="text-align:center">
+CINEXTMA is a movie and TV discovery application with a cinematic, mobile-first interface. It uses TMDB for catalog metadata and helps users find official availability by country. The project does not host or distribute copyrighted media.
 
-![CINEXTMA Mockup Screenshot](https://raw.githubusercontent.com/wisnuwirayuda15/cinextma/refs/heads/master/src/public/img/mockup.png)
+## What is included
 
-</div>
+The redesigned interface includes a polished dark cinema visual system, responsive movie cards, accessible focus states, light/dark theme support, an interface-language switcher, movie and TV browsing, search, personal library flows, and a country-aware “Where to watch” panel.
 
-🍿CINEXTMA🍿 is an open-source, free movies and TV shows streaming platform built with the latest web technologies. It offers a seamless and enjoyable viewing experience, allowing users to discover, search, and enjoy a vast library of content.
+The language experience panel lets a viewer choose a preferred target language and clearly distinguishes three cases: original audio, an official human-dubbed track offered by the provider, and a future live-translation mode that is available only when an authorized source permits audio processing. TMDB spoken-language metadata is not treated as proof that a human-dubbed audio track exists.
 
-## Key Features
+The provider panel uses TMDB’s watch-provider data, powered by its JustWatch partnership, to show subscription, rental and purchase availability by region. The application links users to official availability pages; it does not bypass subscriptions, scrape paid streams, or embed unauthorized sources.
 
-- **💸 Free and Open-Source**: CINEXTMA is completely free to use and the source code is available for anyone to explore, contribute, and build upon.
-- **🌗 Light and Dark Mode**: The application supports both light and dark modes, providing a customizable viewing experience that adapts to user preferences.
-- **🧭 Discover Content**: Users can browse through various content categories, such as popular, trending, and upcoming, to discover new movies and TV shows to enjoy.
-- **🔎 Powerful Search**: The search functionality allows users to easily find specific titles, actors, or genres, making it a breeze to locate the content they're interested in.
-- **📂 Personal Library**: Users can build their own personalized library of favorite movies and TV shows, making it easy to keep track of what they've watched and want to watch.
-- **💻📱 Responsive UI**: The platform's user interface is designed to be responsive and accessible across various devices, ensuring a consistent and enjoyable experience on desktops, tablets, and mobile devices.
-- **📲 Progressive Web App**: The platform is designed to be installable on devices and provide native-like features, ensuring a seamless and engaging experience for users.
-- **🙍‍♂️ User Account**: Users can create an account to access personalized features, such as a watchlist and history.
+## Technology
 
-## Other Features
+The web app uses Next.js, React, TypeScript, Tailwind CSS, HeroUI, TanStack Query, TMDB and Supabase. Capacitor is included to package the same web experience as an Android application. The Android project is generated under `android/` and uses the app id `com.cinextma.multilingual`.
 
-- **📺 TV Shows** (Finished)
-- **🙍‍♂️ User Account** (Finished)
-- **🏆 Achievements System** (Planned)
-- **⚙️ Personal Settings** (Work in Progress)
-- **🌐 Social Features** (Planned)
+## Local development
 
-## Technologies Used
+Clone the public repository and install dependencies:
 
-CINEXTMA is built using the following technologies:
-
-- **Next.js 15 App Router**: The application leverages the latest version of Next.js, which includes the new App Router, providing a more intuitive and powerful development experience.
-- **Tailwind CSS 4**: The user interface is styled using the Tailwind CSS utility-first CSS framework, ensuring a visually appealing and responsive design.
-- **Next UI**: The project utilizes the Next UI library, which provides a set of high-quality, customizable React components that integrate seamlessly with Tailwind CSS.
-- **TypeScript**: The codebase is written in TypeScript, ensuring better type safety, developer productivity, and maintainability.
-- **TanStack Query**: The application uses the TanStack Query library for efficient data fetching and caching, providing a smooth and responsive user experience.
-- **The Movie Database (TMDB) API**: CINEXTMA integrates with the TMDB API to retrieve movie and TV show data, ensuring access to a vast and up-to-date content library.
-- **Supabase**: The project uses Supabase for user authentication and database management.
-
-## Getting Started
-
-To run CINEXTMA locally, follow these steps:
-
-1. Clone the repository:
-
-```
-git clone https://github.com/wisnuwirayuda15/cinextma.git
-```
-
-2. Install the dependencies:
-
-```
-cd cinextma
+```bash
+git clone https://github.com/jigaryarav0800-ship-it/cinextma-multilingual.git
+cd cinextma-multilingual
 npm install
-```
-
-3. Start the development server:
-
-```
+cp .env.local.example .env.local
 npm run dev
 ```
 
-4. Open your browser and visit `http://localhost:3000` to access the CINEXTMA application.
+Open `http://localhost:3000`. Add real TMDB and Supabase values to `.env.local` for live catalog, account and provider functionality. The build can compile without these values, but API-backed features need valid runtime configuration.
 
-## Contributing
+## Android build
 
-Contributions to CINEXTMA are welcome! If you'd like to contribute, please refer to the [CONTRIBUTING](CONTRIBUTING.md) file for guidelines and instructions.
+The project contains a Capacitor Android wrapper using the same web UI:
+
+```bash
+npm run build:static
+npx cap sync android
+cd android
+./gradlew assembleDebug
+```
+
+The debug APK is generated at `android/app/build/outputs/apk/debug/app-debug.apk`. The Android wrapper can load the deployed GitHub Pages URL through `CAP_SERVER_URL`; this keeps the web and Android presentation aligned while official provider playback remains controlled by the provider.
+
+## Automatic GitHub workflow
+
+`.github/workflows/release.yml` is configured to run on pushes to `main` or manually. It calculates the next semantic patch tag, deploys the static web build to GitHub Pages, builds an Android debug APK, uploads the APK as a workflow artifact, and attaches it to a GitHub Release.
+
+Before the workflow can access live TMDB and Supabase data, add the following GitHub Actions secrets: `NEXT_PUBLIC_TMDB_ACCESS_TOKEN`, `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `NEXT_PUBLIC_CAPTCHA_SITE_KEY`, and `NEXT_PUBLIC_AVATAR_PROVIDER_URL`. Never commit `.env.local` or service-role credentials.
+
+## Static hosting limitation
+
+GitHub Pages serves static files only. Account actions, server actions, Supabase auth callbacks and other server-dependent flows require a compatible server deployment. The Pages workflow therefore targets the static web surface, while a full production deployment should run the Next.js server on a server-capable host. The Android wrapper can point at that full deployment by setting `CAP_SERVER_URL`.
+
+## Audio and language policy
+
+The app supports choosing an audio language only when the licensed playback source exposes that official human-recorded track. A movie cannot be converted to a new audio language merely by changing a UI preference. No AI-generated voice or unauthorized stream interception is used. A future licensed media adapter may provide verified audio-track IDs and connect them to the audio selector.
 
 ## License
 
-CINEXTMA is licensed under the [MIT License](LICENSE). This means you are free to use, modify, and distribute the application, as long as you include the original copyright and license notice in your work.
-
-## Star History
-
-<a href="https://www.star-history.com/#wisnuwirayuda15/cinextma&Timeline">
- <picture>
-   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=wisnuwirayuda15/cinextma&type=Timeline&theme=dark" />
-   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=wisnuwirayuda15/cinextma&type=Timeline" />
-   <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=wisnuwirayuda15/cinextma&type=Timeline" />
- </picture>
-</a>
+This project is distributed under the MIT License. See [LICENSE](LICENSE). TMDB and JustWatch attribution and their respective terms apply to provider data.

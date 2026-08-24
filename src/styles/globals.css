@@ -31,6 +31,60 @@
   If we ever want to remove these styles, we need to add an explicit border
   color utility to any element that depends on these defaults.
 */
+:root {
+  --cinema-bg: #0b0b0f;
+  --cinema-surface: #15151c;
+  --cinema-surface-raised: #1d1d27;
+  --cinema-text: #f7f7fb;
+  --cinema-muted: #a9a9b8;
+  --cinema-accent: #e11d48;
+  --cinema-accent-strong: #fb7185;
+  --cinema-ring: rgba(251, 113, 133, 0.48);
+}
+
+html {
+  scroll-behavior: smooth;
+  background: var(--cinema-bg);
+}
+
+body {
+  min-width: 320px;
+  overflow-x: hidden;
+  background:
+    radial-gradient(circle at 15% -10%, rgba(225, 29, 72, 0.17), transparent 34rem),
+    radial-gradient(circle at 88% 0%, rgba(30, 64, 175, 0.14), transparent 28rem),
+    var(--cinema-bg);
+  color: var(--cinema-text);
+  text-rendering: optimizeLegibility;
+}
+
+::selection {
+  background: rgba(225, 29, 72, 0.42);
+  color: #fff;
+}
+
+:focus-visible {
+  outline: 3px solid var(--cinema-ring);
+  outline-offset: 3px;
+}
+
+button,
+a,
+[role="button"] {
+  cursor: pointer;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
 @layer base {
   *,
   ::after,

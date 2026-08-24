@@ -1,19 +1,15 @@
+"use client";
+
+import OfficialProviders from "@/components/sections/Shared/OfficialProviders";
+import LanguageExperience from "@/components/sections/Shared/LanguageExperience";
 import { siteConfig } from "@/config/site";
-import { cn } from "@/utils/helpers";
-import { getTvShowPlayers } from "@/utils/players";
-import { Card, Skeleton } from "@heroui/react";
-import { useDisclosure, useDocumentTitle, useIdle, useLocalStorage } from "@mantine/hooks";
-import dynamic from "next/dynamic";
-import { parseAsInteger, useQueryState } from "nuqs";
-import { memo, useMemo } from "react";
+import { getImageUrl } from "@/utils/movies";
+import { Card, CardBody, Chip, Image } from "@heroui/react";
+import { useDocumentTitle } from "@mantine/hooks";
+import Link from "next/link";
+import { memo } from "react";
+import { FiArrowLeft, FiCalendar, FiFilm, FiHeadphones, FiPlay, FiStar } from "react-icons/fi";
 import { Episode, TvShowDetails } from "tmdb-ts";
-import useBreakpoints from "@/hooks/useBreakpoints";
-import { ADS_WARNING_STORAGE_KEY, SpacingClasses } from "@/utils/constants";
-import { usePlayerEvents } from "@/hooks/usePlayerEvents";
-const AdsWarning = dynamic(() => import("@/components/ui/overlay/AdsWarning"));
-const TvShowPlayerHeader = dynamic(() => import("./Header"));
-const TvShowPlayerSourceSelection = dynamic(() => import("./SourceSelection"));
-const TvShowPlayerEpisodeSelection = dynamic(() => import("./EpisodeSelection"));
 
 export interface TvShowPlayerProps {
   tv: TvShowDetails;
@@ -27,81 +23,77 @@ export interface TvShowPlayerProps {
   startAt?: number;
 }
 
-const TvShowPlayer: React.FC<TvShowPlayerProps> = ({
-  tv,
-  id,
-  episode,
-  episodes,
-  startAt,
-  ...props
-}) => {
-  const [seen] = useLocalStorage<boolean>({
-    key: ADS_WARNING_STORAGE_KEY,
-    getInitialValueInEffect: false,
-  });
-
-  const { mobile } = useBreakpoints();
-  const players = getTvShowPlayers(id, episode.season_number, episode.episode_number, startAt);
-  const idle = useIdle(3000);
-  const [sourceOpened, sourceHandlers] = useDisclosure(false);
-  const [episodeOpened, episodeHandlers] = useDisclosure(false);
-  const [selectedSource, setSelectedSource] = useQueryState<number>(
-    "src",
-    parseAsInteger.withDefault(0),
-  );
-
-  usePlayerEvents({
-    saveHistory: true,
-    metadata: { season: episode.season_number, episode: episode.episode_number },
-  });
-  useDocumentTitle(
-    `Play ${props.seriesName} - ${props.seasonName} - ${episode.name} | ${siteConfig.name}`,
-  );
-
-  const PLAYER = useMemo(() => players[selectedSource] || players[0], [players, selectedSource]);
+const TvShowPlayer: React.FC<TvShowPlayerProps> = ({ tv, id, seriesName, seasonName, episode }) => {
+  useDocumentTitle(`Where to watch ${seriesName} - ${seasonName} - ${episode.name} | ${siteConfig.name}`);
 
   return (
-    <>
-      <AdsWarning />
+    <section className="mx-auto min-h-[calc(100dvh-4rem)] w-full max-w-6xl px-4 pb-16 pt-6 md:px-8 md:pt-10">
+      <Link
+        href={`/tv/${id}`}
+        className="mb-6 inline-flex min-h-11 items-center gap-2 rounded-full px-3 text-sm font-medium text-white/65 transition-colors duration-200 hover:bg-white/10 hover:text-white"
+      >
+        <FiArrowLeft aria-hidden="true" />
+        Back to series
+      </Link>
 
-      <div className={cn("relative", SpacingClasses.reset)}>
-        <TvShowPlayerHeader
-          id={id}
-          episode={episode}
-          hidden={idle && !mobile}
-          selectedSource={selectedSource}
-          onOpenSource={sourceHandlers.open}
-          onOpenEpisode={episodeHandlers.open}
-          {...props}
-        />
+      <Card className="overflow-hidden border border-white/10 bg-white/[0.045] shadow-2xl shadow-black/30">
+        <CardBody className="p-0">
+          <div className="grid gap-0 md:grid-cols-[220px_1fr]">
+            <div className="relative aspect-[2/3] overflow-hidden bg-black/40 md:aspect-auto">
+              <Image
+                removeWrapper
+                src={getImageUrl(tv.poster_path, "poster")}
+                alt={`${seriesName} poster`}
+                className="h-full w-full object-cover"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/65 via-transparent to-transparent" />
+            </div>
+            <div className="flex flex-col justify-center gap-5 p-6 md:p-10">
+              <div className="flex items-center gap-2 text-sm font-semibold uppercase tracking-[0.18em] text-amber-300">
+                <FiFilm aria-hidden="true" />
+                Official episode guide
+              </div>
+              <div>
+                <h1 className="text-3xl font-bold tracking-tight text-white md:text-5xl">{seriesName}</h1>
+                <p className="mt-3 text-base text-white/60">{seasonName} · Episode {episode.episode_number}</p>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <Chip size="sm" variant="flat" startContent={<FiPlay aria-hidden="true" />}>
+                  {episode.name}
+                </Chip>
+                {episode.air_date && (
+                  <Chip size="sm" variant="flat" startContent={<FiCalendar aria-hidden="true" />}>
+                    {episode.air_date}
+                  </Chip>
+                )}
+                <Chip size="sm" color="warning" variant="flat" startContent={<FiStar aria-hidden="true" />}>
+                  {episode.vote_average.toFixed(1)}
+                </Chip>
+              </div>
+              <p className="max-w-3xl text-sm leading-7 text-white/65 md:text-base">
+                Find the series on an official provider for your region. Audio tracks and subtitles are controlled by
+                the provider, so only tracks offered by that service can be selected during playback.
+              </p>
+            </div>
+          </div>
+        </CardBody>
+      </Card>
 
-        <Card shadow="md" radius="none" className="relative h-screen">
-          <Skeleton className="absolute h-full w-full" />
-          {seen && (
-            <iframe
-              allowFullScreen
-              key={PLAYER.title}
-              src={PLAYER.source}
-              className={cn("z-10 h-full", { "pointer-events-none": idle && !mobile })}
-            />
-          )}
-        </Card>
-      </div>
-
-      <TvShowPlayerSourceSelection
-        opened={sourceOpened}
-        onClose={sourceHandlers.close}
-        players={players}
-        selectedSource={selectedSource}
-        setSelectedSource={setSelectedSource}
-      />
-      <TvShowPlayerEpisodeSelection
+      <OfficialProviders
         id={id}
-        opened={episodeOpened}
-        onClose={episodeHandlers.close}
-        episodes={episodes}
+        title={`${seriesName} · ${seasonName}`}
+        type="tv"
+        spokenLanguages={tv.spoken_languages}
       />
-    </>
+      <LanguageExperience
+        availableAudioLanguages={[]}
+      />
+
+      <div className="mt-4 flex items-center gap-2 text-xs text-white/45">
+        <FiHeadphones aria-hidden="true" />
+        Audio-language information is metadata; actual audio selection is provided by the official streaming service.
+      </div>
+    </section>
   );
 };
 

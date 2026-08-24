@@ -8,6 +8,7 @@ import { useWindowScroll } from "@mantine/hooks";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import FullscreenToggleButton from "../button/FullscreenToggleButton";
+import LanguageSwitcher from "../input/LanguageSwitcher";
 import UserProfileButton from "../button/UserProfileButton";
 import SearchInput from "../input/SearchInput";
 import ThemeSwitchDropdown from "../input/ThemeSwitchDropdown";
@@ -31,8 +32,8 @@ const TopNavbar = () => {
       isBlurred={false}
       position="sticky"
       maxWidth="full"
-      classNames={{ wrapper: "px-2 md:px-4" }}
-      className={cn("inset-0 h-min bg-transparent", {
+      classNames={{ wrapper: "px-3 md:px-6" }}
+      className={cn("inset-0 h-min border-b border-white/5 bg-transparent transition-colors duration-200", {
         "bg-background": show,
       })}
     >
@@ -59,6 +60,7 @@ const TopNavbar = () => {
       )}
       <NavbarContent justify="end">
         <NavbarItem className="flex gap-1">
+          <LanguageSwitcher />
           <ThemeSwitchDropdown />
           <FullscreenToggleButton />
           <UserProfileButton />

@@ -1,0 +1,139 @@
+name: CINEXTMA Pages and Android Release
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+env:
+  NODE_VERSION: 22
+  PAGES_BASE_PATH: /cinextma-multilingual
+  PROTECTED_PATHS: /auth
+  NEXT_PUBLIC_TMDB_ACCESS_TOKEN: ${{ secrets.NEXT_PUBLIC_TMDB_ACCESS_TOKEN }}
+  NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+  NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY }}
+  NEXT_PUBLIC_CAPTCHA_SITE_KEY: ${{ secrets.NEXT_PUBLIC_CAPTCHA_SITE_KEY }}
+  NEXT_PUBLIC_AVATAR_PROVIDER_URL: ${{ secrets.NEXT_PUBLIC_AVATAR_PROVIDER_URL }}
+  SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+
+jobs:
+  version:
+    name: Create version tag
+    runs-on: ubuntu-latest
+    outputs:
+      tag: ${{ steps.version.outputs.tag }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Calculate and push patch tag
+        id: version
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          latest=$(git tag --sort=-v:refname | head -n 1)
+          if [[ "$latest" =~ ^v([0-9]+)\.([0-9]+)\.([0-9]+)$ ]]; then
+            major=${BASH_REMATCH[1]}
+            minor=${BASH_REMATCH[2]}
+            patch=$((BASH_REMATCH[3] + 1))
+          else
+            major=1
+            minor=0
+            patch=0
+          fi
+          tag="v${major}.${minor}.${patch}"
+          while git ls-remote --exit-code --tags origin "refs/tags/${tag}" >/dev/null 2>&1; do
+            patch=$((patch + 1))
+            tag="v${major}.${minor}.${patch}"
+          done
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag -a "$tag" -m "CINEXTMA $tag"
+          git push origin "$tag"
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+
+  pages:
+    name: Build and deploy GitHub Pages
+    needs: version
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Export static site
+        env:
+          GITHUB_PAGES: true
+          NEXT_PUBLIC_BASE_PATH: ${{ env.PAGES_BASE_PATH }}
+        run: npm run build:static
+      - name: Add GitHub Pages marker
+        run: touch out/.nojekyll
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: out
+      - name: Deploy to Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+
+  android:
+    name: Build Android APK
+    needs: [version, pages]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Export web bundle for Capacitor
+        env:
+          GITHUB_PAGES: true
+          NEXT_PUBLIC_BASE_PATH: ${{ env.PAGES_BASE_PATH }}
+        run: npm run build:static
+      - name: Sync Android project
+        env:
+          CAP_SERVER_URL: https://${{ github.repository_owner }}.github.io${{ env.PAGES_BASE_PATH }}/
+        run: npx cap sync android
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+      - name: Build debug APK
+        working-directory: android
+        run: ./gradlew assembleDebug --no-daemon
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: cinextma-${{ needs.version.outputs.tag }}-debug-apk
+          path: android/app/build/outputs/apk/debug/app-debug.apk
+      - name: Create GitHub Release and attach APK
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "${{ needs.version.outputs.tag }}" \
+            android/app/build/outputs/apk/debug/app-debug.apk \
+            --title "CINEXTMA ${{ needs.version.outputs.tag }}" \
+            --generate-notes
