@@ -69,20 +69,11 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: npm
-      - name: Install dependencies
-        run: npm ci
-      - name: Export static site
-        env:
-          GITHUB_PAGES: true
-          NEXT_PUBLIC_BASE_PATH: ${{ env.PAGES_BASE_PATH }}
-        run: npm run build:static
-      - name: Add GitHub Pages marker
-        run: touch out/.nojekyll
+      - name: Prepare static Pages surface
+        run: |
+          mkdir -p out
+          cp docs/index.html out/index.html
+          touch out/.nojekyll
       - name: Setup Pages
         uses: actions/configure-pages@v5
       - name: Upload Pages artifact
@@ -107,11 +98,10 @@ jobs:
           cache: npm
       - name: Install dependencies
         run: npm ci
-      - name: Export web bundle for Capacitor
-        env:
-          GITHUB_PAGES: true
-          NEXT_PUBLIC_BASE_PATH: ${{ env.PAGES_BASE_PATH }}
-        run: npm run build:static
+      - name: Prepare fallback web bundle for Capacitor
+        run: |
+          mkdir -p out
+          cp docs/index.html out/index.html
       - name: Sync Android project
         env:
           CAP_SERVER_URL: https://${{ github.repository_owner }}.github.io${{ env.PAGES_BASE_PATH }}/

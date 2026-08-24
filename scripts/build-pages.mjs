@@ -12,6 +12,9 @@ const routeDirs = [
 const pageFile = resolve("src/app/page.tsx");
 const pageBackup = resolve(".pages-build-page-backup.tsx");
 const staticPage = resolve("scripts/pages-home.tsx");
+const layoutFile = resolve("src/app/layout.tsx");
+const layoutBackup = resolve(".pages-build-layout-backup.tsx");
+const staticLayout = resolve("scripts/pages-layout.tsx");
 const backups = routeDirs.map((routeDir) => ({
   routeDir,
   backupDir: resolve(`.pages-build-${routeDir.split("/").pop()}-backup`),
@@ -24,6 +27,9 @@ for (const { routeDir, backupDir } of backups) {
 if (existsSync(pageBackup)) renameSync(pageBackup, pageFile);
 if (existsSync(pageFile)) renameSync(pageFile, pageBackup);
 if (existsSync(staticPage)) renameSync(staticPage, pageFile);
+if (existsSync(layoutBackup)) renameSync(layoutBackup, layoutFile);
+if (existsSync(layoutFile)) renameSync(layoutFile, layoutBackup);
+if (existsSync(staticLayout)) renameSync(staticLayout, layoutFile);
 
 try {
   const result = spawnSync("npx", ["next", "build"], {
@@ -35,6 +41,8 @@ try {
 } finally {
   if (existsSync(pageFile)) renameSync(pageFile, staticPage);
   if (existsSync(pageBackup)) renameSync(pageBackup, pageFile);
+  if (existsSync(layoutFile)) renameSync(layoutFile, staticLayout);
+  if (existsSync(layoutBackup)) renameSync(layoutBackup, layoutFile);
   for (const { routeDir, backupDir } of backups) {
     if (existsSync(routeDir)) renameSync(routeDir, backupDir);
     if (existsSync(backupDir)) renameSync(backupDir, routeDir);
